@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Sofía, de Zaid - Feliz Primavera</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Montserrat:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Great+Vibes&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #120b17 0%, #231227 40%, #15222e 100%);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .font-cursive {
+            font-family: 'Dancing Script', cursive;
+        }
+
+        .font-title {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .envelope-wrapper:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+
+        .envelope-flap {
+            transform-origin: top;
+            transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1), z-index 0.2s ease;
+            z-index: 25;
+        }
+
+        .envelope-wrapper.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 5;
+        }
+
+        .letter-preview {
+            transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s, opacity 0.5s ease;
+            transform: translateY(0) scale(0.9);
+            opacity: 0.9;
+        }
+
+        .envelope-wrapper.open .letter-preview {
+            transform: translateY(-160px) scale(1);
+            opacity: 1;
+        }
+
+        #petalCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes floatCharacter {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(0.8deg); }
+        }
+
+        .character-floating {
+            animation: floatCharacter 4s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.35; filter: blur(25px); }
+            50% { opacity: 0.75; filter: blur(35px); }
+        }
+
+        .glow-effect {
+            animation: pulseGlow 3.5s infinite alternate;
+        }
+
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 235, 170, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #d4af37;
+            border-radius: 10px;
+        }
+
+        .music-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="text-amber-50 flex flex-col items-center justify-center min-h-screen relative selection:bg-amber-400 selection:text-gray-900">
+
+    <canvas id="petalCanvas"></canvas>
+
+    <button id="musicToggle" class="fixed top-6 right-6 z-50 bg-amber-900/40 hover:bg-amber-800/60 backdrop-blur-md border border-amber-500/30 text-amber-200 p-3 rounded-full shadow-lg transition-all flex items-center gap-2 group">
+        <i id="musicIcon" class="fas fa-music text-lg"></i>
+        <span class="text-xs max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-300 ease-in-out whitespace-nowrap pl-0 group-hover:pl-1">Música de fondo</span>
+    </button>
+
+    <main class="container mx-auto px-4 py-8 max-w-5xl z-20 flex flex-col items-center justify-center min-h-screen">
+        
+        <header id="mainHeader" class="text-center mb-6 transition-opacity duration-700">
+            <span class="text-amber-400/90 text-sm md:text-base font-semibold tracking-widest uppercase block mb-1">21 de Septiembre • Primavera</span>
+            <h1 class="text-4xl md:text-6xl font-title text-amber-200 drop-shadow-[0_4px_10px_rgba(255,215,0,0.3)]">
+                Un detalle para ti
+            </h1>
+            <p class="text-amber-100/70 text-xs md:text-sm mt-2 max-w-md mx-auto italic">
+                Haz clic en el sobre para abrir la carta especial que Zaid ha hecho para ti.
+            </p>
+        </header>
+
+        <div id="interactiveArea" class="w-full flex flex-col items-center justify-center relative my-2">
+            
+            <div id="envelopeStage" class="perspective-1000 my-8">
+                <div id="envelope" class="envelope-wrapper w-80 h-52 sm:w-96 sm:h-60 bg-amber-900/90 rounded-b-2xl shadow-2xl relative border border-amber-600/30 flex items-center justify-center">
+                    
+                    <div class="envelope-flap absolute top-0 left-0 w-full h-full">
+                        <svg class="w-full h-32 sm:h-36 drop-shadow-md" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <polygon points="0,0 100,0 50,75" fill="#78350f" stroke="#b45309" stroke-width="0.5"/>
+                        </svg>
+                        <div class="absolute top-20 sm:top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-red-700 hover:bg-red-600 rounded-full border-2 border-amber-300/60 shadow-lg flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-110">
+                            <i class="fas fa-heart text-amber-200 text-lg"></i>
+                        </div>
+                    </div>
+
+                    <div class="absolute inset-0 z-10 pointer-events-none">
+                        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                            <polygon points="0,0 0,100 50,55" fill="#881337" opacity="0.15"/>
+                            <polygon points="100,0 100,100 50,55" fill="#881337" opacity="0.15"/>
+                            <polygon points="0,100 100,100 50,50" fill="#92400e" opacity="0.9"/>
+                        </svg>
+                    </div>
+
+                    <div class="letter-preview absolute z-0 w-[90%] h-[85%] bg-[#fffdf5] rounded-lg shadow-inner p-4 text-gray-800 border border-amber-200/50 flex flex-col items-center justify-center">
+                        <i class="fas fa-sun text-3xl text-amber-500 mb-2"></i>
+                        <p class="font-cursive text-xl text-amber-900 font-bold">Mi queridísima, Sofía…</p>
+                        <p class="text-[10px] text-gray-500 mt-1">Toca para abrir la carta completa</p>
+                    </div>
+
+                    <div class="absolute -bottom-10 text-amber-300/80 text-xs tracking-wider flex items-center gap-2 animate-bounce">
+                        <i class="fas fa-hand-pointer"></i> Toca el sobre para abrir
+                    </div>
+                </div>
+            </div>
+
+            <div id="contentStage" class="hidden w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-2 transition-all duration-1000 opacity-0 scale-95">
+                
+                <!-- Ramo de Girasoles idéntico a la imagen provista -->
+                <div class="lg:col-span-5 flex flex-col items-center justify-center relative group">
+                    <div class="absolute w-72 h-72 sm:w-80 sm:h-80 bg-amber-500/25 rounded-full glow-effect -z-10"></div>
+                    
+                    <div class="character-floating relative w-72 sm:w-80 rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-400/40 bg-black/60 p-6 flex flex-col items-center justify-center">
+                        <!-- SVG Vectorial estilizado imitando el render pixelado/artístico de la imagen -->
+                        <svg class="w-full h-auto drop-shadow-[0_10px_15px_rgba(255,215,0,0.25)]" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Definición de patrones y trazos rugosos -->
+                            <defs>
+                                <filter id="roughness">
+                                    <feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="1" result="noise"/>
+                                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+                                </filter>
+                            </defs>
+
+                            <g filter="url(#roughness)">
+                                <!-- HOJAS Y TALLOS SERRADOS (ESTILO IMAGEN) -->
+                                <!-- Hoja superior izquierda -->
+                                <path d="M 120 180 L 100 150 L 115 130 L 140 120 L 150 145 L 175 135 L 185 160 L 160 185 Z" fill="#7a8b53" stroke="#2a3318" stroke-width="3"/>
+                                <path d="M 115 130 L 155 165" stroke="#2a3318" stroke-width="2"/>
+                                
+                                <!-- Hoja media derecha -->
+                                <path d="M 360 210 L 400 200 L 415 225 L 435 235 L 420 260 L 385 270 L 375 245 L 350 240 Z" fill="#6d7d49" stroke="#222b13" stroke-width="3"/>
+                                <path d="M 360 210 L 415 245" stroke="#222b13" stroke-width="2"/>
+
+                                <!-- Hoja inferior izquierda -->
+                                <path d="M 150 410 L 170 435 L 195 445 L 210 420 L 190 400 L 205 380 L 175 375 Z" fill="#637341" stroke="#1d240f" stroke-width="3"/>
+                                
+                                <!-- Hoja inferior derecha -->
+                                <path d="M 330 420 L 365 435 L 390 415 L 370 390 L 345 395 L 325 375 Z" fill="#586638" stroke="#19200c" stroke-width="3"/>
+
+
+                                <!-- GIRASOL SUPERIOR CENTRO -->
+                                <g transform="translate(300, 150)">
+                                    <!-- Pétalos Capa Trasera (Amarillo dorado) -->
+                                    <path d="
+                                        M0,-95 L12,-75 L30,-90 L32,-68 L55,-80 L48,-58 L75,-62 L60,-42 
+                                        L85,-38 L68,-20 L92,-10 L68,2 L85,20 L62,25 L75,48 L50,42 
+                                        L58,68 L38,55 L40,82 L20,62 L15,88 L-2,65 L-15,88 L-22,62 
+                                        L-42,80 L-38,55 L-65,65 L-52,42 L-80,45 L-60,25 L-88,18 
+                                        L-65,0 L-85,-18 L-60,-22 L-82,-42 L-58,-42 L-72,-65 L-48,-58 
+                                        L-52,-82 L-32,-68 L-30,-92 L-12,-72 Z" 
+                                        fill="#eab308" stroke="#231700" stroke-width="3.5" stroke-linejoin="bevel"/>
+                                    
+                                    <!-- Pétalos Capa Delantera (Amarillo brillante) -->
+                                    <path d="
+                                        M0,-82 L10,-60 L24,-75 L26,-55 L45,-62 L38,-45 L62,-48 L48,-32 
+                                        L68,-28 L52,-14 L72,-6 L52,2 L68,14 L48,18 L60,38 L40,32 
+                                        L45,55 L28,42 L30,68 L14,50 L10,70 L-2,52 L-10,70 L-18,50 
+                                        L-32,65 L-30,42 L-52,50 L-40,32 L-62,34 L-48,18 L-68,12 
+                                        L-50,0 L-68,-12 L-48,-18 L-64,-32 L-45,-32 L-58,-50 L-38,-42 
+                                        L-42,-65 L-24,-52 L-22,-72 L-8,-55 Z" 
+                                        fill="#facc15" stroke="#231700" stroke-width="3" stroke-linejoin="bevel"/>
+
+                                    <!-- Centro Oscuro del Girasol -->
+                                    <circle cx="0" cy="0" r="38" fill="#584018" stroke="#231700" stroke-width="4"/>
+                                    <circle cx="-2" cy="-2" r="28" fill="#38260a"/>
+                                    <path d="M-15,-15 Q0,-25 15,-15 Q25,0 15,15 Q0,25 -15,15 Q-25,0 -15,-15 Z" fill="#221603" opacity="0.6"/>
+                                </g>
+
+                                <!-- GIRASOL IZQUIERDA -->
+                                <g transform="translate(180, 260)">
+                                    <!-- Capa Trasera -->
+                                    <path d="
+                                        M-10,-90 L5,-70 L25,-85 L28,-62 L50,-72 L42,-52 L70,-55 L55,-35 
+                                        L78,-30 L60,-12 L85,-2 L60,10 L78,28 L55,32 L68,55 L42,48 
+                                        L50,72 L30,58 L32,85 L12,65 L8,90 L-8,68 L-20,90 L-26,65 
+                                        L-48,82 L-42,58 L-70,68 L-55,45 L-82,48 L-62,28 L-90,20 
+                                        L-68,2 L-88,-15 L-62,-18 L-85,-38 L-60,-38 L-75,-60 L-50,-52 
+                                        L-55,-78 L-35,-62 L-32,-88 L-15,-68 Z" 
+                                        fill="#ca8a04" stroke="#231700" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+                                    <!-- Capa Delantera -->
+                                    <path d="
+                                        M-8,-75 L4,-55 L18,-70 L20,-50 L40,-58 L32,-40 L58,-42 L42,-26 
+                                        L62,-22 L48,-8 L68,0 L48,8 L62,20 L42,24 L52,42 L32,36 
+                                        L38,58 L22,45 L24,68 L8,52 L5,72 L-5,55 L-12,72 L-18,52 
+                                        L-36,65 L-30,45 L-55,52 L-42,34 L-65,36 L-48,20 L-70,14 
+                                        L-50,2 L-68,-10 L-48,-14 L-65,-28 L-45,-28 L-58,-45 L-38,-38 
+                                        L-42,-60 L-25,-48 L-22,-68 L-8,-50 Z" 
+                                        fill="#eab308" stroke="#231700" stroke-width="3" stroke-linejoin="bevel"/>
+
+                                    <!-- Centro del Girasol -->
+                                    <circle cx="0" cy="0" r="35" fill="#4a3512" stroke="#231700" stroke-width="4"/>
+                                    <circle cx="-2" cy="-2" r="24" fill="#2d1e06"/>
+                                </g>
+
+                                <!-- GIRASOL INFERIOR CENTRO -->
+                                <g transform="translate(290, 360)">
+                                    <!-- Capa Trasera -->
+                                    <path d="
+                                        M0,-100 L14,-78 L35,-95 L35,-70 L60,-82 L50,-60 L80,-65 L65,-44 
+                                        L90,-38 L70,-20 L95,-8 L70,5 L90,25 L65,30 L78,55 L52,48 
+                                        L60,75 L38,60 L42,90 L20,68 L15,95 L-2,70 L-18,95 L-24,68 
+                                        L-45,88 L-40,60 L-70,72 L-55,45 L-85,50 L-65,28 L-92,18 
+                                        L-68,0 L-90,-20 L-65,-24 L-88,-45 L-62,-44 L-78,-70 L-50,-60 
+                                        L-55,-88 L-35,-70 L-32,-98 L-14,-75 Z" 
+                                        fill="#eab308" stroke="#231700" stroke-width="3.5" stroke-linejoin="bevel"/>
+
+                                    <!-- Capa Delantera -->
+                                    <path d="
+                                        M0,-85 L10,-62 L28,-78 L28,-56 L48,-65 L40,-48 L65,-50 L50,-34 
+                                        L72,-28 L55,-14 L75,-5 L55,4 L72,18 L50,22 L62,42 L40,36 
+                                        L48,60 L28,46 L32,72 L14,52 L10,75 L-2,55 L-12,75 L-18,55 
+                                        L-35,68 L-30,46 L-55,55 L-42,34 L-68,38 L-50,20 L-72,12 
+                                        L-52,0 L-70,-14 L-50,-18 L-68,-34 L-48,-34 L-60,-52 L-38,-44 
+                                        L-42,-68 L-25,-52 L-22,-75 L-8,-58 Z" 
+                                        fill="#facc15" stroke="#231700" stroke-width="3" stroke-linejoin="bevel"/>
+
+                                    <!-- Centro Oscuro -->
+                                    <circle cx="0" cy="0" r="42" fill="#422f10" stroke="#231700" stroke-width="4"/>
+                                    <circle cx="-2" cy="-2" r="30" fill="#281a07"/>
+                                </g>
+                            </g>
+                        </svg>
+
+                        <div class="mt-4 text-center">
+                            <span class="inline-block bg-amber-950/90 border border-amber-400/40 text-amber-200 text-xs px-3 py-1 rounded-full backdrop-blur-md shadow-md">
+                                <i class="fas fa-sun text-amber-400 mr-1"></i> Aquí están tus flores amarillas.
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna de la Carta -->
+                <div class="lg:col-span-7 w-full">
+                    <div class="bg-[#fffdf7] text-gray-800 rounded-2xl p-6 sm:p-8 shadow-2xl border-4 border-amber-200/80 relative overflow-hidden transform rotate-1 transition-all">
+                        
+                        <div class="absolute top-0 left-0 right-0 h-3 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500"></div>
+                        <div class="absolute -right-12 -bottom-12 w-40 h-40 bg-amber-100 rounded-full opacity-50 pointer-events-none"></div>
+
+                        <div class="max-h-[58vh] overflow-y-auto pr-3 custom-scroll space-y-4 text-sm sm:text-base leading-relaxed font-light text-gray-700">
+                            
+                            <h2 class="text-2xl sm:text-3xl font-cursive font-bold text-amber-900 border-b border-amber-200 pb-2 mb-4">
+                                Mi queridísima, Sofía…
+                            </h2>
+
+                            <p>
+                                Seguro que no esperabas esto, ¿o sí? Jajaja. Bueno, hoy 21 de septiembre, dando inicio a la primavera, no quería que te quedaras como una simple espectadora. Eres alguien a quien aprecio profundamente y, la verdad, te has ganado mi confianza y mi corazón, pedazo a pedazo.
+                            </p>
+
+                            <p>
+                                A decir verdad, estuve dando vueltas en mi mente pensando qué escribirte. Quería decirte que te quiero muchísimo y que eres una persona sencillamente espectacular pero sabemos que si empezaba con mi sentimentalismo jamás acabaría y tampoco quería aburrirte con tanta cursilería barata así que supongo que solo diré... te quiero mucho. Hubiera querido darte flores reales, pero el tiempo jugaba en mi contra y tenía demasiadas ideas librando una batalla en mi cabeza. Al final, me decidí por este pequeño detalle, esperando con el alma que sea de tu agrado.
+                            </p>
+
+                            <p>
+                                A veces me pongo a pensar en lo fascinante que es tenerte cerca. Entre cada risa compartida y cada conversación, te has vuelto un pilar de mi día a día, alguien indispensable a quien es imposible mirar con indiferencia. Dicen por ahí que el tiempo vuela cuando la compañía es la correcta, y contigo siempre me quedo con ganas de más tiempo. Gracias por hacerme feliz con tus ocurrencias, y espero poder estar mucho más tiempo a tu lado.
+                            </p>
+
+                            <div class="pt-6 text-right">
+                                <p class="text-gray-500 text-xs italic mb-1">Te quiere,</p>
+                                <p class="font-cursive text-2xl font-bold text-amber-900">Zaid...</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-amber-100 flex items-center justify-between text-xs text-amber-800/60">
+                            <span><i class="fas fa-sun text-amber-500 mr-1"></i> 21 de Septiembre</span>
+                            <span>Flores Amarillas • Primavera</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-6">
+                        <button id="resetBtn" class="text-xs text-amber-300/70 hover:text-amber-200 underline transition-colors">
+                            <i class="fas fa-redo mr-1"></i> Volver a guardar la carta en el sobre
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Audio Synthesizer
+        let audioCtx = null;
+        let isPlaying = false;
+        let musicInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSoftChord() {
+            if (!audioCtx || !isPlaying) return;
+            
+            const chords = [
+                [261.63, 329.63, 392.00, 493.88],
+                [220.00, 261.63, 329.63, 392.00],
+                [174.61, 220.00, 261.63, 329.63],
+                [196.00, 246.94, 293.66, 392.00]
+            ];
+            
+            const chord = chords[Math.floor(Math.random() * chords.length)];
+            const now = audioCtx.currentTime;
+
+            chord.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.exponentialRampToValueAtTime(0.04, now + idx * 0.15 + 0.5);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.15 + 4.0);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now + idx * 0.15);
+                osc.stop(now + idx * 0.15 + 4.5);
+            });
+        }
+
+        const musicBtn = document.getElementById('musicToggle');
+        const musicIcon = document.getElementById('musicIcon');
+
+        musicBtn.addEventListener('click', () => {
+            initAudio();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                musicIcon.className = "fas fa-volume-up text-amber-400 music-pulse";
+                playSoftChord();
+                musicInterval = setInterval(playSoftChord, 4000);
+            } else {
+                musicIcon.className = "fas fa-music text-lg";
+                clearInterval(musicInterval);
+            }
+        });
+
+        // Envelope Interaction
+        const envelope = document.getElementById('envelope');
+        const envelopeStage = document.getElementById('envelopeStage');
+        const contentStage = document.getElementById('contentStage');
+        const mainHeader = document.getElementById('mainHeader');
+        const resetBtn = document.getElementById('resetBtn');
+
+        envelope.addEventListener('click', () => {
+            if (!envelope.classList.contains('open')) {
+                envelope.classList.add('open');
+                
+                if (!isPlaying) {
+                    try {
+                        initAudio();
+                        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                        isPlaying = true;
+                        musicIcon.className = "fas fa-volume-up text-amber-400 music-pulse";
+                        playSoftChord();
+                        musicInterval = setInterval(playSoftChord, 4000);
+                    } catch(e) {}
+                }
+
+                setTimeout(() => {
+                    envelopeStage.classList.add('hidden');
+                    mainHeader.classList.add('opacity-40');
+                    contentStage.classList.remove('hidden');
+                    setTimeout(() => {
+                        contentStage.classList.remove('opacity-0', 'scale-95');
+                        contentStage.classList.add('opacity-100', 'scale-100');
+                    }, 50);
+                }, 1200);
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            contentStage.classList.remove('opacity-100', 'scale-100');
+            contentStage.classList.add('opacity-0', 'scale-95');
+            
+            setTimeout(() => {
+                contentStage.classList.add('hidden');
+                envelopeStage.classList.remove('hidden');
+                mainHeader.classList.remove('opacity-40');
+                
+                setTimeout(() => {
+                    envelope.classList.remove('open');
+                }, 100);
+            }, 500);
+        });
+
+        // Sunflower Petals Animation
+        const canvas = document.getElementById('petalCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class SunflowerPetal {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20 - Math.random() * 100;
+                this.size = 10 + Math.random() * 14;
+                this.speedY = 1.2 + Math.random() * 2;
+                this.speedX = -1 + Math.random() * 2;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.04;
+                
+                const colors = ['#FACC15', '#EAB308', '#CA8A04', '#FEF08A'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.opacity = 0.7 + Math.random() * 0.3;
+                
+                this.isFullFlower = Math.random() < 0.2;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.01) + this.speedX;
+                this.rotation += this.rotationSpeed;
+
+                if (this.y > canvas.height + 30) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.opacity;
+
+                if (this.isFullFlower) {
+                    const r = this.size * 0.8;
+                    ctx.fillStyle = '#543818';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, r * 0.4, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = this.color;
+                    for (let i = 0; i < 8; i++) {
+                        ctx.rotate(Math.PI / 4);
+                        ctx.beginPath();
+                        ctx.ellipse(r * 0.7, 0, r * 0.4, r * 0.15, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.strokeStyle = '#854d0e';
+                    ctx.lineWidth = 0.8;
+
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.quadraticCurveTo(this.size / 2, -this.size, 0, -this.size * 2.2);
+                    ctx.quadraticCurveTo(-this.size / 2, -this.size, 0, 0);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        const petals = Array.from({ length: 40 }, () => new SunflowerPetal());
+
+        function animatePetals() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw();
+            });
+            requestAnimationFrame(animatePetals);
+        }
+
+        animatePetals();
+    </script>
+</body>
+</html>
